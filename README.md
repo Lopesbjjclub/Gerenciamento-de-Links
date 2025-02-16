@@ -1,0 +1,1 @@
+https://gerenciadorlinks.netlify.app/
