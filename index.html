@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <!-- Adicione o link para os ícones Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Mantenha os meta tags originais -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciador de Links</title>
-    <meta name="theme-color" content="#9370DB">
+    <meta name="theme-color" content="#222">
     <meta property="og:title" content="Gerenciador de Links ">
     <meta property="og:description" content="Salve seus links favoritos e compartilhe com amigos!">
     <meta property="og:image" content="https://gerenciadorlinks.netlify.app/img/download.png">
@@ -17,7 +15,6 @@
     <meta property="og:url" content="https://gerenciadorlinks.netlify.app/">
     <meta property="og:type" content="website">
     <style>
-        /* Mantenha os estilos originais e adicione os novos */
         * {
             margin: 0;
             padding: 0;
@@ -101,7 +98,6 @@
             color: #00FF00;
         }
 
-        /* Novos estilos para ícones */
         .icon-btn {
             cursor: pointer;
             margin-left: 10px;
@@ -137,28 +133,33 @@
         </form>
     </div>
 
+    <div class="form-container">
+        <input type="text" id="searchInput" placeholder="Pesquisar por nome...">
+    </div>
+
     <div class="links-list" id="linksList"></div>
 
     <script>
-        // Função para compartilhar via WhatsApp
         function shareLink(url, name) {
             const text = `Confira este link: ${name} - ${url}`;
             const encodedText = encodeURIComponent(text);
             window.open(`https://wa.me/?text=${encodedText}`, '_blank');
         }
 
-        // Mantenha o código original com as modificações necessárias
         let links = JSON.parse(localStorage.getItem('links')) || [];
 
         function saveLinks() {
             localStorage.setItem('links', JSON.stringify(links));
         }
 
-        function displayLinks() {
+        function displayLinks(linksArray) {
             const linksList = document.getElementById('linksList');
             linksList.innerHTML = '';
 
-            links.forEach((link, index) => {
+            const linksToDisplay = linksArray || links;
+
+            linksToDisplay.forEach((link, index) => {
+                const originalIndex = link.originalIndex !== undefined ? link.originalIndex : index;
                 const linkElement = document.createElement('div');
                 linkElement.className = 'link-item';
                 linkElement.innerHTML = `
@@ -167,11 +168,22 @@
                         <i class="fas fa-share-from-square share-icon icon-btn" 
                            onclick="shareLink('${link.url}', '${link.name}')"></i>
                         <i class="fas fa-trash delete-icon icon-btn" 
-                           onclick="deleteLink(${index})"></i>
+                           onclick="deleteLink(${originalIndex})"></i>
                     </div>
                 `;
                 linksList.appendChild(linkElement);
             });
+        }
+
+        function handleSearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!searchTerm) {
+                displayLinks();
+                return;
+            }
+            const filteredLinks = links.map((link, index) => ({ ...link, originalIndex: index }))
+                                       .filter(link => link.name.toLowerCase().includes(searchTerm));
+            displayLinks(filteredLinks);
         }
 
         function addLink(event) {
@@ -197,19 +209,21 @@
 
             links.push(newLink);
             saveLinks();
-            displayLinks();
 
             nameInput.value = '';
             urlInput.value = '';
+
+            handleSearch();
         }
 
         function deleteLink(index) {
             links.splice(index, 1);
             saveLinks();
-            displayLinks();
+            handleSearch();
         }
 
         document.getElementById('linkForm').addEventListener('submit', addLink);
+        document.getElementById('searchInput').addEventListener('input', handleSearch);
         displayLinks();
     </script>
 </body>
